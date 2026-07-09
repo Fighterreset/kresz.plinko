@@ -12,6 +12,46 @@ export const QUESTIONS: Question[] = [
   ...groupDQuestions,
 ];
 
+const STORAGE_KEY = "kresz_plinko_custom_questions_v1";
+
+/**
+ * Loads the current active list of questions from localStorage (with fallback to default QUESTIONS)
+ */
+export function getQuestionsFromStorage(): Question[] {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error("Failed to load questions from localStorage:", e);
+  }
+  return QUESTIONS;
+}
+
+/**
+ * Saves the modified list of questions to localStorage
+ */
+export function saveQuestionsToStorage(questions: Question[]): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
+  } catch (e) {
+    console.error("Failed to save questions to localStorage:", e);
+  }
+}
+
+/**
+ * Resets the question database back to the factory default QUESTIONS
+ */
+export function resetQuestionsToDefault(): Question[] {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    console.error("Failed to reset questions in localStorage:", e);
+  }
+  return QUESTIONS;
+}
+
 /**
  * Fisher-Yates shuffle algorithm to randomly order questions.
  */
@@ -32,8 +72,9 @@ export function getQuestionsForCategory(
   categoryId: string,
   count: number
 ): Question[] {
-  // 1. Filter questions belonging to the selected category
-  const filtered = QUESTIONS.filter((q) => q.category === categoryId);
+  // 1. Filter questions belonging to the selected category (using the dynamic store)
+  const allQuestions = getQuestionsFromStorage();
+  const filtered = allQuestions.filter((q) => q.category === categoryId);
   
   // 2. Shuffle using Fisher-Yates algorithm
   const shuffled = shuffleQuestions(filtered);
